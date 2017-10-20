@@ -4,6 +4,7 @@ import Home from "./components/Home/Home.js";
 import Board from "./components/Boards/Board.js";
 import { HashRouter, Route, Link } from "react-router-dom";
 
+
 import "./styles/global.sass";
 
 const App = () =>
@@ -15,3 +16,4 @@ const App = () =>
   </HashRouter>;
 
 ReactDom.render(<App />, document.getElementById("react-root"));
+

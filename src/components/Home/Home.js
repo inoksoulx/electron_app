@@ -8,9 +8,14 @@ class BoardList extends Component {
   }
   render() {
     return (
-      <Link to={`/boards/${this.props.name}`} className="waves-effect waves-light btn-large">
-        {this.props.name}
-      </Link>
+      <div className="col s12 home_margin">
+        <Link
+          to={`/boards/${this.props.name}`}
+          className="waves-effect waves-light btn-large home_link"
+        >
+          {this.props.name}
+        </Link>
+      </div>
     );
   }
 }
@@ -27,6 +32,15 @@ class Home extends Component {
     this.addBoard = this.addBoard.bind(this);
     this.handleChange = this.handleChange.bind(this);
   }
+  componentWillMount() {
+    let self = this;
+    $.get("http://localhost:3000/api/board/", res => {
+      const boards = res;
+      self.setState({
+        boards
+      });
+    });
+  }
   showForm() {
     this.setState(prevState => ({
       visible: !prevState.visible
@@ -36,23 +50,22 @@ class Home extends Component {
     this.setState({ value: event.target.value });
   }
   addBoard() {
-    let boardsList = this.state.boards;
+    let board = {
+      url: this.state.value,
+      name: this.state.value
+    };
 
-    boardsList.push(this.state.value);
-
-    this.setState({
-      boards: boardsList
-    });
-
-    console.log(this.state.boards);
+    $.post("http://localhost:3000/api/board/", board);
   }
   render() {
     return (
       <div className="container">
-        {this.state.boards.map((item, index) => {
-          return <BoardList key={`item-${index}`} name={item} />;
-        })}
-        <div className="add_board">
+        <div className="row">
+          {this.state.boards.map((item, index) => {
+            return <BoardList key={`item-${index}`} name={item.name} />;
+          })}
+        </div>
+        <div className="col s12 home_margin">
           <a className="waves-effect waves-light btn" onClick={this.showForm}>
             Add
           </a>

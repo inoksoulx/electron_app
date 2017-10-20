@@ -30,7 +30,12 @@ class AddButton extends Component {
             this.state.visible ? "add_list_content active" : "add_list_content"
           }
         >
-          <input type="text" name="title" ref="title" placeholder="Type name of your list." />
+          <input
+            type="text"
+            name="title"
+            ref="title"
+            placeholder="Type name of your list."
+          />
           <a
             className="waves-effect waves-light btn"
             onClick={() => this.props.add(this.refs.title.value)}
@@ -46,15 +51,91 @@ class AddButton extends Component {
 class ListItem extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      visible: false
+    };
+
+    this.showArea = this.showArea.bind(this);
+    this.changeItem = this.changeItem.bind(this);
+  }
+  componentWillMount() {
+    this.setState({
+      item: this.props.item
+    });
+  }
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      item: nextProps.item
+    })
+  }
+  componentWillUnmount() {
+    this.showArea();
+  }
+  changeItem() {
+    let self = this;
+
+    $.ajax({
+      url: `http://localhost:3000/api/board/list/sub/${self.props.id}`,
+      type: "PUT",
+      data: {
+        newVal: self.refs.item_value.value
+      },
+      success: response => {
+        this.setState(prevState => ({
+          visible: !prevState.visible,
+          item: response
+        }));
+      }
+    });
+  }
+  showArea() {
+    this.setState(prevState => ({
+      visible: !prevState.visible
+    }));
+    this.refs.item_value.value = this.state.item;
+    console.log('pull')
   }
   render() {
     return (
       <li className="collection-item">
-        <div>
-          {this.props.item}
-          <a href="#!" className="secondary-content">
-            <i className="material-icons">create</i>
+        <div className="item_wrapper">
+          {this.state.item}
+          <a className="secondary-content" onClick={this.showArea}>
+            <i className="material-icons">more_vert</i>
           </a>
+          <div
+            className={this.state.visible ? "back_lay active" : "back_lay"}
+          />
+          <div
+            className={
+              this.state.visible ? "task_service active" : "task_service"
+            }
+          >
+            <div>
+              <textarea className="materialize-textarea" ref="item_value" />
+              <a
+                className="waves-effect waves-light btn"
+                onClick={this.changeItem}
+              >
+                Save
+              </a>
+              <a
+                className="waves-effect waves-light btn"
+                onClick={this.showArea}
+              >
+                Close
+              </a>
+            </div>
+            <div className="service_container">
+              <a
+                className="waves-effect waves-light btn"
+                onClick={() =>
+                  this.props.remove(this.props.id) }
+              >
+                Delete
+              </a>
+            </div>
+          </div>
         </div>
       </li>
     );
@@ -66,25 +147,70 @@ class List extends Component {
     super(props);
     this.state = {
       visible: false,
-      items: []
+      subtasks: []
     };
 
     this.showArea = this.showArea.bind(this);
     this.addItem = this.addItem.bind(this);
+    this.removeItem = this.removeItem.bind(this);
   }
   showArea() {
     this.setState(prevState => ({
       visible: !prevState.visible
     }));
   }
+  componentWillMount() {
+    this.setState((prevState, props) => ({
+      subtasks: (prevState.subtasks = props.subtasks)
+    }));
+  }
   addItem() {
-    let itemsList = this.state.items;
+    let self = this;
+    let itemsList = this.state.subtasks;
     let itemValue = this.refs.item_value.value;
 
-    itemsList.push(itemValue);
+    let newSub = {
+      content: itemValue
+    };
 
-    this.setState({
-      items: itemsList
+    itemsList.push(newSub);
+
+    $.ajax({
+      url: `http://localhost:3000/api/board/list/${self.props.name}`,
+      type: "PUT",
+      data: {
+        board_id: self.props.board_id,
+        list_id: self.props.list_id,
+        subtasks: itemsList
+      },
+      success: response => {
+        self.setState({
+          subtasks: response
+        });
+      }
+    });
+  }
+  removeItem(val) {
+    let self = this;
+    let itemsList = this.state.subtasks;
+
+    let filteredList = itemsList.filter(item => {
+      return item._id != val;
+    });
+
+    $.ajax({
+      url: `http://localhost:3000/api/board/list/${self.props.name}`,
+      type: "PUT",
+      data: {
+        board_id: self.props.board_id,
+        list_id: self.props.list_id,
+        subtasks: filteredList
+      },
+      success: response => {
+        self.setState({
+          subtasks: response
+        });
+      }
     });
   }
   render() {
@@ -93,23 +219,36 @@ class List extends Component {
         <ul className="collection with-header">
           <li className="collection-header">
             <span>
-              {this.props.header}
+              {this.props.name}
             </span>
           </li>
-          {this.state.items.map((item, index) => {
-            return <ListItem key={`item-${index}`} item={item} />;
+
+          {this.state.subtasks.map((item, index) => {
+            return (
+              <ListItem
+                key={`item-${index}`}
+                item={item.content}
+                id={item._id}
+                remove={this.removeItem}
+              />
+            );
           })}
         </ul>
 
-        <div className={this.state.visible ? "input-field active" : "input-field"}>
-          <textarea className="materialize-textarea" ref="item_value"/>
+        <div
+          className={this.state.visible ? "input-field active" : "input-field"}
+        >
+          <textarea className="materialize-textarea" ref="item_value" />
         </div>
         <a
           className={
-            this.state.visible ? "waves-effect waves-light btn no_active" : "waves-effect waves-light btn"
+            this.state.visible
+              ? "waves-effect waves-light btn no_active"
+              : "waves-effect waves-light btn"
           }
           onClick={this.showArea}
-        ><i className="material-icons right">note_add</i>
+        >
+          <i className="material-icons right">note_add</i>
           Add a card.
         </a>
         <div
@@ -133,28 +272,59 @@ class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      list: []
+      board: {
+        lists: []
+      }
     };
   }
+  componentWillMount() {
+    let self = this;
+    $.get(
+      `http://localhost:3000/api/board/${this.props.match.params.id}`,
+      res => {
+        const board = res[0];
+        self.setState({
+          board
+        });
+      }
+    );
+  }
   addList(val) {
-    let listNow = this.state.list;
+    let self = this;
+    let boardNow = this.state.board;
     let newItem = {
-      header: val
+      name: val
     };
 
-    listNow.push(newItem);
+    boardNow.lists.push(newItem);
 
-    this.setState({
-      list: listNow
+    $.ajax({
+      url: `http://localhost:3000/api/board/${this.props.match.params.id}`,
+      type: "PUT",
+      data: {
+        board_id: self.state.board._id,
+        list: self.state.board.lists
+      },
+      success: response => {
+        self.setState({
+          board: response
+        });
+      }
     });
-
-    console.log(this.state.list);
   }
   render() {
     return (
       <div className="add_list">
-        {this.state.list.map((item, index) => {
-          return <List header={item.header} key={`item-${index}`} />;
+        {this.state.board.lists.map((item, index) => {
+          return (
+            <List
+              name={item.name}
+              key={`item-${index}`}
+              list_id={item._id}
+              board_id={this.state.board._id}
+              subtasks={item.subtusks}
+            />
+          );
         })}
         <AddButton add={this.addList.bind(this)} />
       </div>

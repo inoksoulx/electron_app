@@ -1,3 +1,6 @@
+.collection
+  overflow: visible
+
 .add_list
   display: flex
   align-items: flex-start
@@ -37,7 +40,6 @@
 .item_content
   width: 300px 
   margin-right: 7px
-  overflow: hidden
   padding: 10px
 
   .collection-header
@@ -49,8 +51,6 @@
 
     &.active
       display: block
-
-  
   a
     display: block
 
@@ -88,3 +88,48 @@
       padding: 5px
 
     
+.task_service
+    position: absolute
+    top: 0px
+    z-index: 3
+    display: none
+    width: 280px
+    left: -30px
+    top: -10px
+    border: 5px solid rgba(205, 255, 250, 1)
+    box-shadow: 0px 0px 19px -1px rgba(0,0,0,0.75)
+    border-radius: 2px
+    background: linear-gradient(to right, #4ac29a, #bdfff3)
+
+    &.active
+      display: block
+
+    textarea
+      background: white
+      padding-left: 30px
+      padding-right: 30px
+      width: 210px
+
+.service_container
+    position: absolute
+    top: 0px
+    left: 295px
+    
+
+
+.item_wrapper
+    position: relative
+
+.back_lay
+    background-color: rgba(0, 0, 0, 0.6)
+    width: 100%
+    height: 2000px
+    overflow: hidden
+    position: fixed
+    top: -900px
+    left: 0px
+    z-index: 2
+    display: none
+
+    &.active
+      display: block
